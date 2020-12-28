@@ -63,22 +63,45 @@ namespace API_QandA.Data
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
-                var question = connection.QueryFirstOrDefault<QuestionGetSingleResponse>
-                (
-                    @"EXEC dbo.Question_GetSingle @QuestionId = @QuestionId",
-                    new { QuestionId = questionId }
-                );
-                // TODO - Get the answers for the question
-                if (question != null)
+
+                // SLOW RESPONSE
+
+                //var question = connection.QueryFirstOrDefault<QuestionGetSingleResponse>
+                //(
+                //    @"EXEC dbo.Question_GetSingle @QuestionId = @QuestionId",
+                //    new { QuestionId = questionId }
+                //);
+                //// TODO - Get the answers for the question
+                //if (question != null)
+                //{
+                //    question.Answers = connection.Query<AnswerGetResponse>
+                //    (
+                //        @"EXEC dbo.Answer_Get_ByQuestionId
+                //        @QuestionId = @QuestionId",
+                //        new { QuestionId = questionId }
+                //    );
+                //}
+                //return question;
+
+                using (GridReader results =
+connection.QueryMultiple(
+@"EXEC dbo.Question_GetSingle
+@QuestionId = @QuestionId;
+EXEC dbo.Answer_Get_ByQuestionId
+@QuestionId = @QuestionId",
+new { QuestionId = questionId }
+)
+)
                 {
-                    question.Answers = connection.Query<AnswerGetResponse>
-                    (
-                        @"EXEC dbo.Answer_Get_ByQuestionId
-                        @QuestionId = @QuestionId",
-                        new { QuestionId = questionId }
-                    );
+                    var question =
+                    results.Read<QuestionGetSingleResponse>().FirstOrDefault();
+                    if (question != null)
+                    {
+                        question.Answers =
+                        results.Read<AnswerGetResponse>().ToList();
+                    }
+                    return question;
                 }
-                return question;
             }
 
         }
@@ -174,6 +197,56 @@ namespace API_QandA.Data
             }
         }
 
-        
+        public IEnumerable<QuestionGetManyResponse> GetQuestionsWithAnswers()
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                
+                // SLOW RESPONSE 
+
+                //var questions =
+                //connection.Query<QuestionGetManyResponse>(
+                //"EXEC dbo.Question_GetMany");
+                //foreach (var question in questions)
+                //{
+                //    question.Answers =
+                //    connection.Query<AnswerGetResponse>
+                //    (
+                //        @"EXEC dbo.Answer_Get_ByQuestionId
+                //            @QuestionId = @QuestionId",
+                //        new { QuestionId = question.QuestionId }
+                //    )
+                //    .ToList();
+                //}
+                //return questions;
+
+                var questionDictionary = new Dictionary<int, QuestionGetManyResponse>();
+                return connection.Query
+                <QuestionGetManyResponse,
+                AnswerGetResponse,
+                QuestionGetManyResponse>
+                (
+                    "EXEC dbo.Question_GetMany_WithAnswers",
+                    map: (q, a) =>
+                    {
+                        QuestionGetManyResponse question;
+                        if (!questionDictionary.TryGetValue(q.QuestionId, out question))
+                        {
+                            question = q;
+                            question.Answers = new List<AnswerGetResponse>();
+                            questionDictionary.Add(question.QuestionId, question);
+                        }
+                        question.Answers.Add(a);
+                        return question;
+                    },
+                    splitOn: "QuestionId"
+                )
+                .Distinct()
+                .ToList();
+            }
+        }
+
+
     }
 }

@@ -31,19 +31,18 @@ namespace API_QandA.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<QuestionGetManyResponse> GetQuestions(string search)
+        public IEnumerable<QuestionGetManyResponse> GetQuestions(string search, bool includeAnswers)
         {
             if (string.IsNullOrEmpty(search))
             {
-                // TODO - get questions from data repository
-
-                var questions = _dataRepository.GetQuestions();
-
-                // TODO - return questions in the response
-
-                return questions;
-
-                //return _dataRepository.GetQuestions();
+                if (includeAnswers)
+                {
+                    return _dataRepository.GetQuestionsWithAnswers();
+                }
+                else
+                {
+                    return _dataRepository.GetQuestions();
+                }
             }
             else
             {
