@@ -22,7 +22,11 @@ namespace API_QandA.Data
         void DeleteQuestion(int questionId);
         AnswerGetResponse PostAnswer(AnswerPostFullRequest answer);
 
+        // OTHERS
+
         IEnumerable<QuestionGetManyResponse> GetQuestionsWithAnswers();
+        IEnumerable<QuestionGetManyResponse> GetQuestionsBySearchWithPaging(string search,int pageNumber,int pageSize);
+
 
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Data.SqlClient;
 using Dapper;
 using API_QandA.Models;
-
+using static Dapper.SqlMapper;
 
 namespace API_QandA.Data
 {
@@ -83,18 +83,18 @@ namespace API_QandA.Data
                 //}
                 //return question;
 
-                using (GridReader results =
-connection.QueryMultiple(
-@"EXEC dbo.Question_GetSingle
-@QuestionId = @QuestionId;
-EXEC dbo.Answer_Get_ByQuestionId
-@QuestionId = @QuestionId",
-new { QuestionId = questionId }
-)
-)
+                using 
+                (GridReader results = connection.QueryMultiple
+                    (
+                        @"EXEC dbo.Question_GetSingle
+                        @QuestionId = @QuestionId;
+                        EXEC dbo.Answer_Get_ByQuestionId
+                        @QuestionId = @QuestionId",
+                        new { QuestionId = questionId }
+                    )
+                )
                 {
-                    var question =
-                    results.Read<QuestionGetSingleResponse>().FirstOrDefault();
+                    var question = results.Read<QuestionGetSingleResponse>().FirstOrDefault();
                     if (question != null)
                     {
                         question.Answers =
@@ -246,6 +246,32 @@ new { QuestionId = questionId }
                 .ToList();
             }
         }
+
+        public IEnumerable<QuestionGetManyResponse>
+GetQuestionsBySearchWithPaging(
+string search,
+int pageNumber,
+int pageSize
+)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                var parameters = new
+                {
+                    Search = search,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                };
+                return connection.Query<QuestionGetManyResponse>(
+                @"EXEC dbo.Question_GetMany_BySearch_WithPaging
+@Search = @Search,
+@PageNumber = @PageNumber,
+@PageSize = @PageSize", parameters
+                );
+            }
+        }
+
 
 
     }
