@@ -1,6 +1,13 @@
 import React, { FC, useState, Fragment, useEffect } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
+// Signal R
+import {
+  HubConnectionBuilder,
+  HubConnectionState,
+  HubConnection,
+} from '@aspnet/signalr';
+
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
 import { gray3, gray6 } from '../style/Styles';
@@ -25,15 +32,88 @@ interface RouteProps {
 const QuestionPage: FC<RouteComponentProps<RouteProps>> = ({ match }) => {
   const [question, setQuestion] = useState<QuestionsData | null>(null);
 
+  // Signal R
+  const setUpSignalRConnection = async (questionId: number) => {
+    // TODO - setup connection to real-time SignalR API
+    const connection = new HubConnectionBuilder()
+      .withUrl('http://localhost:17525/questionshub')
+      .withAutomaticReconnect()
+      .build();
+
+    // TODO - handle Message function being called
+    connection.on('Message', (message: string) => {
+      console.log('Message', message);
+    });
+
+    // TODO - handle ReceiveQuestion function being called
+    connection.on('ReceiveQuestion', (question: QuestionsData) => {
+      console.log('ReceiveQuestion', question);
+      setQuestion(question);
+    });
+
+    // TODO - start the connection
+    try {
+      await connection.start();
+    } catch (err) {
+      console.log(err);
+    }
+
+    // TODO - subscribe to question
+    if (connection.state === HubConnectionState.Connected) {
+      connection.invoke('SubscribeQuestion', questionId).catch((err: Error) => {
+        return console.error(err.toString());
+      });
+    }
+
+    return connection;
+  };
+
+  const cleanUpSignalRConnection = async (
+    questionId: number,
+    connection: HubConnection,
+  ) => {
+    // TODO - unsubscribe from the question
+    if (connection.state === HubConnectionState.Connected) {
+      try {
+        await connection.invoke('UnsubscribeQuestion', questionId);
+      } catch (err) {
+        return console.error(err.toString());
+      }
+      connection.off('Message');
+      connection.off('ReceiveQuestion');
+      connection.stop();
+    } else {
+      connection.off('Message');
+      connection.off('ReceiveQuestion');
+      connection.stop();
+    }
+    // TODO - stop the connection
+  };
+
   useEffect(() => {
     const doGetQuestion = async (questionId: number) => {
       const foundQuestion = await getQuestion(questionId);
       setQuestion(foundQuestion);
     };
+    // Signal R
+    let connection: HubConnection;
+
     if (match.params.questionId) {
       const questionId = Number(match.params.questionId);
       doGetQuestion(questionId);
+      // Signal R
+      setUpSignalRConnection(questionId).then((con) => {
+        connection = con;
+      });
     }
+
+    // Signal R
+    return function cleanUp() {
+      if (match.params.questionId) {
+        const questionId = Number(match.params.questionId);
+        cleanUpSignalRConnection(questionId, connection);
+      }
+    };
   }, [match.params.questionId]);
 
   const handleSubmit = async (values: Values_Interface) => {
