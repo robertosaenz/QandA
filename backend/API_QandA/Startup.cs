@@ -50,6 +50,15 @@ namespace API_QandA
             // IDataRepository is referenced in a constructor, substitute an instance of the DataRepository class.
             services.AddScoped<IDataRepository, DataRepository>();
 
+            // CORS
+            services.AddCors(options =>
+                options.AddPolicy("CorsPolicy", builder =>
+                builder.AllowAnyMethod()
+                .AllowAnyHeader()
+                .WithOrigins("http://localhost:3000")
+                .AllowCredentials()));
+
+
             // Signal R
             services.AddSignalR();
         }
@@ -57,6 +66,9 @@ namespace API_QandA
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // CORS
+            app.UseCors("CorsPolicy");
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

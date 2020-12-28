@@ -17,6 +17,8 @@ import {
   QuestionsData,
   getQuestion,
   postAnswer,
+  mapQuestionFromServer,
+  QuestionDataFromServer,
 } from '../interfaces/QuestionsData';
 
 // Extra Components
@@ -36,7 +38,7 @@ const QuestionPage: FC<RouteComponentProps<RouteProps>> = ({ match }) => {
   const setUpSignalRConnection = async (questionId: number) => {
     // TODO - setup connection to real-time SignalR API
     const connection = new HubConnectionBuilder()
-      .withUrl('http://localhost:17525/questionshub')
+      .withUrl('https://localhost:44311/questionshub')
       .withAutomaticReconnect()
       .build();
 
@@ -46,9 +48,9 @@ const QuestionPage: FC<RouteComponentProps<RouteProps>> = ({ match }) => {
     });
 
     // TODO - handle ReceiveQuestion function being called
-    connection.on('ReceiveQuestion', (question: QuestionsData) => {
+    connection.on('ReceiveQuestion', (question: QuestionDataFromServer) => {
       console.log('ReceiveQuestion', question);
-      setQuestion(question);
+      setQuestion(mapQuestionFromServer(question));
     });
 
     // TODO - start the connection
