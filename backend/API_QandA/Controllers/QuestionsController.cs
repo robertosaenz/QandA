@@ -16,17 +16,25 @@ namespace API_QandA.Controllers
     [ApiController]
     public class QuestionsController : ControllerBase
     {
+        // DATA QUESTION ANSWER
         private readonly IDataRepository _dataRepository;
+        
+        // SIGNAL R
         private readonly IHubContext<QuestionsHub> _questionHubContext;
 
+        // CACHE
+        private readonly IQuestionCache _cache;
 
-        public QuestionsController(IDataRepository dataRepository, IHubContext<QuestionsHub> questionHubContext)
+        public QuestionsController(IDataRepository dataRepository, IHubContext<QuestionsHub> questionHubContext, IQuestionCache questionCache)
         {
             // TODO - set reference to _dataRepository
             _dataRepository = dataRepository;
 
             // TODO - set reference to _questionHubContext
             _questionHubContext = questionHubContext;
+
+            // TODO - set reference to _cache
+            _cache = questionCache;
 
         }
 
@@ -62,13 +70,21 @@ namespace API_QandA.Controllers
         [HttpGet("{questionId}")]
         public ActionResult<QuestionGetSingleResponse> GetQuestion(int questionId)
         {
-            // TODO - call the data repository to get the question
-            var question = _dataRepository.GetQuestion(questionId);
-            // TODO - return HTTP status code 404 if the question isn't found
+            // FIRST IF QUESTION : CACHE
+            var question = _cache.Get(questionId);
             if (question == null)
             {
-                return NotFound();
+                // SECOND IF QUESTION : RETRIEVE DATA 
+                // TODO - call the data repository to get the question
+                question = _dataRepository.GetQuestion(questionId);
+                // TODO - return HTTP status code 404 if the question isn't found
+                if (question == null)
+                {
+                    return NotFound();
+                }
+                _cache.Set(question);
             }
+            
             // TODO - return question in response with status code 200
             return question;
         }
@@ -120,6 +136,9 @@ namespace API_QandA.Controllers
             // TODO - call the data repository with the updated question model to update the question in the database
             var savedQuestion = _dataRepository.PutQuestion(questionId,questionPutRequest);
 
+            // CACHE remove 
+            _cache.Remove(savedQuestion.QuestionId);
+
             // TODO - return the saved question
             return savedQuestion;
         }
@@ -133,6 +152,9 @@ namespace API_QandA.Controllers
                 return NotFound();
             }
             _dataRepository.DeleteQuestion(questionId);
+
+            _cache.Remove(questionId);
+
             return NoContent();
         }
 
@@ -157,6 +179,9 @@ namespace API_QandA.Controllers
                 Created = DateTime.UtcNow
             }
             );
+
+            // CACHE
+            _cache.Remove(answerPostRequest.QuestionId.Value);
 
             // SIGNAL R
             _questionHubContext.Clients.Group($"Question-{answerPostRequest.QuestionId.Value}")

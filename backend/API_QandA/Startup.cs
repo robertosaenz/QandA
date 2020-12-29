@@ -61,6 +61,10 @@ namespace API_QandA
 
             // Signal R
             services.AddSignalR();
+
+            // CACHE
+            services.AddMemoryCache();
+            services.AddSingleton<IQuestionCache, QuestionCache>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
