@@ -8,6 +8,8 @@ using API_QandA.Data;
 using API_QandA.Models;
 using Microsoft.AspNetCore.SignalR;
 using API_QandA.Hubs;
+using System.IO;
+using Newtonsoft.Json;
 
 
 namespace API_QandA.Controllers
@@ -90,18 +92,22 @@ namespace API_QandA.Controllers
         }
 
         [HttpPost]
-        public ActionResult<QuestionGetSingleResponse> PostQuestion(QuestionPostRequest questionPostRequest)
+        public ActionResult<QuestionGetSingleResponse> PostQuestion(QuestionPostRequest questionPostRequest) // Removed (QuestionPostRequest questionPostRequest)
         {
+            //var json = await new StreamReader(Request.Body).ReadToEndAsync();
+            //var questionPostRequest =
+            //JsonConvert.DeserializeObject<QuestionPostRequest>(json);
+
             // TODO - call the data repository to save the question
-            var savedQuestion = _dataRepository.PostQuestion( new QuestionPostFullRequest 
-            { 
-                Title=questionPostRequest.Title,
-                Content=questionPostRequest.Content,
-                UserId="1",
-                UserName="test@test.com",
-                Created=DateTime.UtcNow
+            var savedQuestion = _dataRepository.PostQuestion(new QuestionPostFullRequest
+            {
+                Title = questionPostRequest.Title,
+                Content = questionPostRequest.Content,
+                UserId = "1",
+                UserName = "test@test.com",
+                Created = DateTime.UtcNow
             }
-            );; //_dataRepository.PostQuestion(questionPostRequest);
+            ); //_dataRepository.PostQuestion(questionPostRequest);
 
             // TODO - return HTTP status code 201
             return CreatedAtAction(nameof(GetQuestion),
@@ -109,6 +115,23 @@ namespace API_QandA.Controllers
             savedQuestion);
                 // redirect ap/questions/3
         }
+
+        //[HttpPost]
+        //public async Task<ActionResult<QuestionGetSingleResponse>> PostQuestion(QuestionPostRequest questionPostRequest)
+        //{
+        //    var savedQuestion = await _dataRepository.PostQuestion(new QuestionPostFullRequest
+        //    {
+        //        Title = questionPostRequest.Title,
+        //        Content = questionPostRequest.Content,
+        //        UserName = "bob.test@test.com",
+        //        UserId = "1",
+        //        Created = DateTime.UtcNow
+        //    });
+        //    return CreatedAtAction(nameof(GetQuestion), new
+        //    {
+        //        questionId = savedQuestion.QuestionId
+        //    }, savedQuestion);
+        //}
 
         [HttpPut("{questionId}")]
         public ActionResult<QuestionGetSingleResponse>PutQuestion(int questionId,QuestionPutRequest questionPutRequest)

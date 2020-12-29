@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using DbUp;
 using API_QandA.Data;
 using API_QandA.Hubs;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace API_QandA
 {
@@ -65,6 +66,17 @@ namespace API_QandA
             // CACHE
             services.AddMemoryCache();
             services.AddSingleton<IQuestionCache, QuestionCache>();
+
+            // AUTH0
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.Authority = Configuration["Auth0:Authority"];
+                options.Audience = Configuration["Auth0:Audience"];
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -84,6 +96,9 @@ namespace API_QandA
             // app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            //AUTH0
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
