@@ -14,6 +14,9 @@ using DbUp;
 using API_QandA.Data;
 using API_QandA.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+using API_QandA.Authorization;
 
 namespace API_QandA
 {
@@ -77,6 +80,17 @@ namespace API_QandA
                 options.Authority = Configuration["Auth0:Authority"];
                 options.Audience = Configuration["Auth0:Audience"];
             });
+            
+            // AUTH0 VALIDATION
+            services.AddHttpClient();
+            services.AddAuthorization(options =>
+                options.AddPolicy("MustBeQuestionAuthor", policy =>
+                    policy.Requirements
+                        .Add(new MustBeQuestionAuthorRequirement())));
+
+            services.AddScoped<IAuthorizationHandler,MustBeQuestionAuthorHandler>();
+            services.AddSingleton<IHttpContextAccessor,HttpContextAccessor>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

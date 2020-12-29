@@ -8,24 +8,24 @@ namespace API_QandA.Data
 {
     public interface IDataRepository
     {
-        IEnumerable<QuestionGetManyResponse> GetQuestions();
-        IEnumerable<QuestionGetManyResponse> GetQuestionsBySearch(string search);
-        IEnumerable<QuestionGetManyResponse> GetUnansweredQuestions();
-        QuestionGetSingleResponse GetQuestion(int questionId);
-        bool QuestionExists(int questionId);
-        AnswerGetResponse GetAnswer(int answerId);
+        Task<IEnumerable<QuestionGetManyResponse>> GetQuestions();
+        Task<IEnumerable<QuestionGetManyResponse>> GetQuestionsBySearch(string search);
+        Task<IEnumerable<QuestionGetManyResponse>> GetUnansweredQuestions();
+        Task<QuestionGetSingleResponse> GetQuestion(int questionId);
+        Task<bool> QuestionExists(int questionId);
+        Task<AnswerGetResponse> GetAnswer(int answerId);
 
         // OTHERS
 
-        QuestionGetSingleResponse PostQuestion(QuestionPostFullRequest question); //QuestionPostRequest was replaced for QuestionPostFullRequest
-        QuestionGetSingleResponse PutQuestion(int questionId, QuestionPutRequest question);
-        void DeleteQuestion(int questionId);
-        AnswerGetResponse PostAnswer(AnswerPostFullRequest answer);
+        Task<QuestionGetSingleResponse> PostQuestion(QuestionPostFullRequest question); //QuestionPostRequest was replaced for QuestionPostFullRequest
+        Task<QuestionGetSingleResponse> PutQuestion(int questionId, QuestionPutRequest question);
+        Task DeleteQuestion(int questionId);
+        Task<AnswerGetResponse> PostAnswer(AnswerPostFullRequest answer);
 
         // OTHERS
 
-        IEnumerable<QuestionGetManyResponse> GetQuestionsWithAnswers();
-        IEnumerable<QuestionGetManyResponse> GetQuestionsBySearchWithPaging(string search,int pageNumber,int pageSize);
+        Task<IEnumerable<QuestionGetManyResponse>> GetQuestionsWithAnswers();
+        Task<IEnumerable<QuestionGetManyResponse>> GetQuestionsBySearchWithPaging(string search,int pageNumber,int pageSize);
 
         // ASYNC
 
